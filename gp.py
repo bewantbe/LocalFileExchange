@@ -74,6 +74,20 @@ def process_view_list(file_list):
             img_list.append((f,f))
     return img_list
 
+def process_view_video(file_list):
+    if not file_list:
+        file_list = '.'
+    for f in file_list:
+        if os.path.isfile(f) and f.endswith('.mp4'):
+            return f
+
+def get_select_img(evt: gr.SelectData):
+    #print(f"==>> evt.selected: {evt.selected}") # True
+    #print(f"==>> evt._data: {evt._data}") # {'index': 1, 'value': None}
+    print(f"You selected {evt.value} at {evt.index} from {evt.target}") # You selected None at 1 from gallery
+    #return [evt.value, evt.value['image']['path']]
+    return evt.value['image']['path']
+
 # Create the Gradio interface
 with gr.Blocks(theme=gr.themes.Default(
                     spacing_size=gr.themes.sizes.spacing_md,
@@ -101,14 +115,29 @@ with gr.Blocks(theme=gr.themes.Default(
 
     explorer = gr.FileExplorer(label="Browse files")
     with gr.Row():
+        root_dir_input = gr.Textbox(label="Root directory", value='.')
+        change_root_button = gr.Button("Change root")
+        change_root_button.click(lambda i: gr.FileExplorer(root_dir=i), inputs=root_dir_input, outputs=explorer)
+    with gr.Row():
         selected_files = gr.Textbox(label="Selected file", interactive=False)
         view_button = gr.Button("View in gallery")
+        view_video_button = gr.Button("View video")
         update_ex_button = gr.Button("Update")
         #update_ex_button.click(lambda i: gr.FileExplorer(root_dir='.'), outputs=explorer)
     explorer.change(lambda f_list: str(f_list), explorer, selected_files)
 
     img_gallery = gr.Gallery(object_fit='contain', show_download_button=False)
     view_button.click(process_view_list, inputs=explorer, outputs=img_gallery)
+
+    #selected_img = gr.Textbox(label="Selected image", interactive=False)
+    show_img = gr.Image(show_download_button=False)
+    #img_gallery.select(get_select_img, outputs=[selected_img, show_img])
+    img_gallery.select(get_select_img, outputs=show_img)
+
+    gr.Markdown("---")
+
+    show_video = gr.Video(show_download_button=False)
+    view_video_button.click(process_view_video, inputs=explorer, outputs=show_video)
 
 # Launch the app
 demo.launch(server_name="0.0.0.0", server_port=7860)
