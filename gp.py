@@ -92,17 +92,6 @@ with gr.Blocks(theme=gr.themes.Default(
             save_output = gr.Textbox(label="Save status", interactive=False)
             save_button = gr.Button("Save text")
             save_button.click(save_text, inputs=[text_input, save_name], outputs=save_output)
-
-    gr.Markdown("---")
-
-    # File upload button
-    with gr.Row():
-        file_input = gr.File(label="Upload a file", scale=2)
-        with gr.Column(scale=1):
-            upload_output = gr.Textbox(label="Upload status", interactive=False)
-            upload_button = gr.Button("Save upload")
-            upload_button.click(handle_upload, inputs=file_input, outputs=upload_output)
-
     with gr.Row():
         upload_status = gr.Textbox(label="Upload status", interactive=False)
         upload_button = gr.UploadButton("Upload a file", file_count="single")
@@ -110,19 +99,15 @@ with gr.Blocks(theme=gr.themes.Default(
 
     gr.Markdown("---")
 
-    #gr.FileExplorer(label="Browse files")
-    #gr.Files(label="Browse files")
-    #download_button = gr.DownloadButton("Download the file")
-    
     explorer = gr.FileExplorer(label="Browse files")
     with gr.Row():
         selected_files = gr.Textbox(label="Selected file", interactive=False)
         view_button = gr.Button("View in gallery")
         update_ex_button = gr.Button("Update")
-        update_ex_button.click(lambda i: gr.FileExplorer(root_dir='.'), outputs=explorer)
+        #update_ex_button.click(lambda i: gr.FileExplorer(root_dir='.'), outputs=explorer)
     explorer.change(lambda f_list: str(f_list), explorer, selected_files)
 
-    img_gallery = gr.Gallery()
+    img_gallery = gr.Gallery(object_fit='contain', show_download_button=False)
     view_button.click(process_view_list, inputs=explorer, outputs=img_gallery)
 
 # Launch the app
