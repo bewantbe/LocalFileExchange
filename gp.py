@@ -67,11 +67,15 @@ def process_view_list(file_list):
         if os.path.isdir(f):
             for f2 in os.listdir(f):
                 p = os.path.join(f, f2)
-                if os.path.isfile(p) and (                             \
+                if os.path.isfile(p) and not os.path.isdir(p) and (                             \
                    f2.endswith('.jpg') or f2.endswith('.png') ):
                     img_list.append((p, f2))
         else:
-            img_list.append((f,f))
+            p = f
+            f2 = f
+            if os.path.isfile(p) and not os.path.isdir(p) and (                             \
+                f2.endswith('.jpg') or f2.endswith('.png') ):
+                img_list.append((p, f2))
     return [img_list, gr.Tabs(selected='view_gallery')]
 
 def process_view_video(file_list):
@@ -110,7 +114,7 @@ with gr.Blocks(theme=gr.themes.Default(
                 view_text_button = gr.Button("View text")
                 #update_ex_button = gr.Button("Update")
                 #update_ex_button.click(lambda i: gr.FileExplorer(root_dir='.'), outputs=explorer)
-            show_text_output = gr.Textbox(label="Text content", interactive=False)
+            show_text_output = gr.Textbox(label="Text content", interactive=False, show_copy_button=True)
             gr.Markdown('---')
             explorer.change(lambda f_list: str(f_list), explorer, selected_files)
             view_text_button.click(lambda f: open(f[0]).read(), inputs=explorer, outputs=show_text_output)
