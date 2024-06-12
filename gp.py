@@ -79,12 +79,13 @@ def process_view_video(file_list):
         file_list = '.'
     for f in file_list:
         if os.path.isfile(f) and f.endswith('.mp4'):
+            print('==>> f:', f)
             return f
 
 def get_select_img(evt: gr.SelectData):
     #print(f"==>> evt.selected: {evt.selected}") # True
     #print(f"==>> evt._data: {evt._data}") # {'index': 1, 'value': None}
-    print(f"You selected {evt.value} at {evt.index} from {evt.target}") # You selected None at 1 from gallery
+    #print(f"You selected {evt.value} at {evt.index} from {evt.target}") # You selected None at 1 from gallery
     #return [evt.value, evt.value['image']['path']]
     return evt.value['image']['path']
 
@@ -93,51 +94,53 @@ with gr.Blocks(theme=gr.themes.Default(
                     spacing_size=gr.themes.sizes.spacing_md,
                     radius_size=gr.themes.sizes.radius_md,
                     text_size=gr.themes.sizes.text_lg)) as demo:
-    # Text box and save button
-    with gr.Row():
-        text_input = gr.Textbox(
-           label="Enter text",
-           lines=7,
-           placeholder="Enter text here",
-           scale=2,
-           min_width=300)
-        with gr.Column(scale=1, min_width=200):
-            save_name = gr.Textbox(label="File name", lines=1, value='text_%F_%T.txt')
-            save_output = gr.Textbox(label="Save status", interactive=False)
-            save_button = gr.Button("Save text")
-            save_button.click(save_text, inputs=[text_input, save_name], outputs=save_output)
-    with gr.Row():
-        upload_status = gr.Textbox(label="Upload status", interactive=False)
-        upload_button = gr.UploadButton("Upload a file", file_count="single")
-        upload_button.upload(handle_upload, inputs=upload_button, outputs=upload_status)
+    
+    with gr.Tab('Browse'):
+        explorer = gr.FileExplorer(label="Browse files")
+        with gr.Row():
+            root_dir_input = gr.Textbox(label="Root directory", value='.')
+            change_root_button = gr.Button("Change root")
+            change_root_button.click(lambda i: gr.FileExplorer(root_dir=i), inputs=root_dir_input, outputs=explorer)
+        with gr.Row():
+            selected_files = gr.Textbox(label="Selected file", interactive=False)
+            view_button = gr.Button("View in gallery")
+            view_video_button = gr.Button("View video")
+            update_ex_button = gr.Button("Update")
+            #update_ex_button.click(lambda i: gr.FileExplorer(root_dir='.'), outputs=explorer)
+        explorer.change(lambda f_list: str(f_list), explorer, selected_files)
 
-    gr.Markdown("---")
+    with gr.Tab('Upload'):
+        with gr.Row():
+            text_input = gr.Textbox(
+            label="Enter text",
+            lines=7,
+            placeholder="Enter text here",
+            scale=2,
+            min_width=300)
+            with gr.Column(scale=1, min_width=200):
+                save_name = gr.Textbox(label="File name", lines=1, value='text_%F_%T.txt')
+                save_output = gr.Textbox(label="Save status", interactive=False)
+                save_button = gr.Button("Save text")
+                save_button.click(save_text, inputs=[text_input, save_name], outputs=save_output)
+        gr.Markdown("---")
+        with gr.Row():
+            upload_status = gr.Textbox(label="Upload status", interactive=False)
+            upload_button = gr.UploadButton("Upload a file", file_count="single")
+            upload_button.upload(handle_upload, inputs=upload_button, outputs=upload_status)
 
-    explorer = gr.FileExplorer(label="Browse files")
-    with gr.Row():
-        root_dir_input = gr.Textbox(label="Root directory", value='.')
-        change_root_button = gr.Button("Change root")
-        change_root_button.click(lambda i: gr.FileExplorer(root_dir=i), inputs=root_dir_input, outputs=explorer)
-    with gr.Row():
-        selected_files = gr.Textbox(label="Selected file", interactive=False)
-        view_button = gr.Button("View in gallery")
-        view_video_button = gr.Button("View video")
-        update_ex_button = gr.Button("Update")
-        #update_ex_button.click(lambda i: gr.FileExplorer(root_dir='.'), outputs=explorer)
-    explorer.change(lambda f_list: str(f_list), explorer, selected_files)
+    with gr.Tab('View gallery'):
+        img_gallery = gr.Gallery(object_fit='contain', show_download_button=False)
+        view_button.click(process_view_list, inputs=explorer, outputs=img_gallery)
 
-    img_gallery = gr.Gallery(object_fit='contain', show_download_button=False)
-    view_button.click(process_view_list, inputs=explorer, outputs=img_gallery)
+        gr.Markdown("---")
+        #selected_img = gr.Textbox(label="Selected image", interactive=False)
+        show_img = gr.Image(show_download_button=False)
+        #img_gallery.select(get_select_img, outputs=[selected_img, show_img])
+        img_gallery.select(get_select_img, outputs=show_img)
 
-    #selected_img = gr.Textbox(label="Selected image", interactive=False)
-    show_img = gr.Image(show_download_button=False)
-    #img_gallery.select(get_select_img, outputs=[selected_img, show_img])
-    img_gallery.select(get_select_img, outputs=show_img)
-
-    gr.Markdown("---")
-
-    show_video = gr.Video(show_download_button=False)
-    view_video_button.click(process_view_video, inputs=explorer, outputs=show_video)
+    with gr.Tab('View video'):
+        show_video = gr.Video(show_download_button=False)
+        view_video_button.click(process_view_video, inputs=explorer, outputs=show_video)
 
 # Launch the app
 demo.launch(server_name="0.0.0.0", server_port=7860)
