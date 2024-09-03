@@ -7,6 +7,7 @@ import os
 import shutil
 import time
 import re
+import socket
 import gradio as gr
 
 # to avoid error
@@ -94,6 +95,20 @@ def get_select_img(evt: gr.SelectData):
     #return [evt.value, evt.value['image']['path']]
     return evt.value['image']['path']
 
+def get_local_ip():
+    # https://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+
 # Create the Gradio interface
 with gr.Blocks(theme=gr.themes.Default(
                     spacing_size=gr.themes.sizes.spacing_md,
@@ -152,6 +167,11 @@ with gr.Blocks(theme=gr.themes.Default(
             show_video = gr.Video(show_download_button=False)
             view_video_button.click(process_view_video, inputs=explorer, outputs=[show_video, gr_tabs])
 
+ip_port = 7860
+
+ip_str = get_local_ip()
+print('Server address: ', ip_str, ':', ip_port, sep='')
+
 # Launch the app
-demo.launch(server_name="0.0.0.0", server_port=7860)
+demo.launch(server_name="0.0.0.0", server_port=ip_port)
 #demo.launch()
