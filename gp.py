@@ -8,6 +8,7 @@ import shutil
 import time
 import re
 import socket
+import pandas as pd
 import gradio as gr
 
 # to avoid error
@@ -125,6 +126,7 @@ with gr.Blocks(theme=gr.themes.Default(
             with gr.Row():
                 selected_files = gr.Textbox(label="Selected file", interactive=False)
                 view_button = gr.Button("View in gallery")
+                view_xlsx_button = gr.Button("View in DataFrame")
                 view_video_button = gr.Button("View video")
                 view_text_button = gr.Button("View text")
                 #update_ex_button = gr.Button("Update")
@@ -166,6 +168,48 @@ with gr.Blocks(theme=gr.themes.Default(
         with gr.Tab('View video', id='view_video'):
             show_video = gr.Video(show_download_button=False)
             view_video_button.click(process_view_video, inputs=explorer, outputs=[show_video, gr_tabs])
+        
+        with gr.Tab('View table', id='view_table'):
+            # load a table from a xlsx file as pandas DataFrame
+            #tb1 = pd.read_excel('table.xlsx')
+            df = pd.DataFrame({
+                "A" : [14, 4, 5, 4, 1], 
+                "B" : [5, 2, 54, 3, 2], 
+                "C" : [20, 20, 7, 3, 8], 
+                "D" : [14, 3, 6, 2, 6], 
+                "E" : [23, 45, 64, 32, 23]
+            }) 
+            #df = df.style.highlight_max(color = 'lightgreen', axis = 0)
+            def highlight_cols(x):
+                df = x.copy()
+                df.loc[:, :] = 'color: purple'
+                #col_headers = df.columns.tolist()
+                #df[col_headers[1]] = 'color: red'
+                #df[col_headers[1]] = 'max-width: 100px'
+                #df.loc[1] = 'color: red'
+                #df[['B']] = 'max-width: 100px'
+                #df[['B']] = 'color: blue'
+                return df
+            df_styler = df.style.apply(highlight_cols, axis = None)
+            #df_styler = df.style.set_table_styles({
+            #    'B': [{'selector': '', 'props': [('color', 'red')]}],
+            #    'B': [{'selector': 'td', 'props': 'color: blue;'}]
+            #}, overwrite=False)
+            df_table1 = gr.DataFrame(df_styler)
+        
+            def load_table(f_list):
+                if not f_list:
+                    f_list = '.'
+                for f in f_list:
+                    if os.path.isfile(f) and f.endswith('.xlsx'):
+                        # https://www.gradio.app/guides/styling-the-gradio-dataframe
+                        df = pd.read_excel(f)
+                        df.iloc[:, 1] = df.iloc[:, 1].apply(
+                            lambda s: str(s)[:25])
+                        df_styler = df.style.apply(highlight_cols, axis = None)
+                        return df_styler
+                return None
+            view_xlsx_button.click(load_table, inputs=explorer, outputs=df_table1)
 
 ip_port = 7860
 
